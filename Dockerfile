@@ -1,4 +1,4 @@
 FROM nginx:latest
-RUN systemct restart nginx.service
+RUN service nginx restart 
 COPY index.html /var/www/html
 EXPOSE 8000
