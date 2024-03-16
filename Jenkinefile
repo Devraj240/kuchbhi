@@ -18,7 +18,7 @@ pipeline {
          stage('BUILDING') {
             steps {
                 echo 'Building kuch image '
-                sh 'docker build -t $DOCKERHUB_CREDENTIALS_USR/kuch:latest .' 
+                sh 'docker build -t $DOCKERHUB_CREDENTIALS_USR/img:latest .' 
             }
         }
         
@@ -33,32 +33,28 @@ pipeline {
         stage('PUSHING IMAGE') {
             steps {
                 
-                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/kuch:latest'
+                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/img:latest'
                 echo 'You have sucessfully pushed images on Dockerhub '
             }
         }
         
-        stage('SSH-LOGIN') {
+        stage('SSH-LOGIN AND DEPLOYMENT') {
             steps {
                 
                 withCredentials([sshUserPrivateKey(credentialsId: 'sshlogin', usernameVariable: 'name', 
                 keyFileVariable: 'MY_SSH_KEY')]){
                     sshagent(['30524d69-8f7b-45df-9112-ca758c1ca31a']) {
-                      sh 'ssh -o StrictHostKeyChecking=no ubuntu@18.144.70.94'
+                      sh '''ssh -o StrictHostKeyChecking=no ubuntu@18.144.70.94 " sudo -i &&
+                      docker pull $DOCKERHUB_CREDENTIALS_USR/img:latest &&
+                      docker run -d -p 8000:8000 $DOCKERHUB_CREDENTIALS_USR/img:latest "'''
+                      echo 'sucessfully deployed'
                     }
-                    echo ' You have sucessfully login in remote server. '
+                    
                 }
                 
             }
         }
         
-        stage('DEPLOYMENT') {
-            steps {
-                sh 'docker pull $DOCKERHUB_CREDENTIALS_USR/kuch:latest '
-                sh 'docker run -d -p 8000:8000 $DOCKERHUB_CREDENTIALS_USR/kuch:latest'
-                echo ' Congratulations, Deployment is sucessfull '
-            }
-        }
     }
 }
 
